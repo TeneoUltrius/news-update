@@ -35,8 +35,4 @@ return [
         'token' => env('OPENAI_TOKEN'),
     ],
 
-    'openai_edits' => [
-        'uri' => env('OPENAI_EDITS_URI'),
-        'model' => env('OPENAI_EDITS_MODEL'),
-    ],
 ];

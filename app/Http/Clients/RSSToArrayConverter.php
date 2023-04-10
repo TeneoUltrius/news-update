@@ -8,14 +8,17 @@ class RSSToArrayConverter
 {
     private string $rssUri;
 
-    private function __construct($rssUri) {
+    private function __construct(string $rssUri) {
         $this->rssUri = $rssUri;
     }
 
-    #[Pure] public static function fromUri($rssUri): RSSToArrayConverter {
+    #[Pure] public static function fromUri(string $rssUri): RSSToArrayConverter {
         return new self($rssUri);
     }
 
+    /**
+     * @throws \Exception
+     */
     public function convert(): array {
         $rssArray = array();
         try {
@@ -28,7 +31,7 @@ class RSSToArrayConverter
                 'title' => (string) $item->title,
                 'description' => (string) $item->description,
                 'link' => (string) $item->link,
-                'pubDate' => Carbon::createFromFormat('D, d M Y H:i:s O', $item->pubDate),
+                'pubDate' => Carbon::createFromFormat('D, d M Y H:i:s O', (string) $item->pubDate),
                 'show_message' => false,
             );
         }

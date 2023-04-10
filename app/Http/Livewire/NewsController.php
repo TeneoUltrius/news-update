@@ -2,6 +2,8 @@
 
 namespace App\Http\Livewire;
 
+use Exception;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use App\Http\Clients\RSSToArrayConverter;
 use App\Http\Clients\OpenAIClient;
@@ -9,43 +11,100 @@ use App\Http\Clients\OpenAIClient;
 class NewsController extends Component
 {
     // Settings
+    /**
+     * Prefix of rss url.
+     *
+     * @var string
+     */
     private string $rssBaseUrl = 'https://rss.nytimes.com/services/xml/rss/nyt/';
+
+    /**
+     * Suffix/extension of rss url.
+     *
+     * @var string
+     */
     private string $rssExt = '.xml';
+
+    /**
+     * Location of rss-types array.
+     *
+     * @var string
+     */
     private string $rssTypesPath = '/config/rsstypes.php';
+
+    /**
+     * Mounted array of rss-types.
+     *
+     * @var array
+     */
+    public array $rssTypes = [];
+
+    /**
+     * The response of rss.
+     *
+     * @var array
+     */
+    public array $rssResponse = [];
+
+    /**
+     * The maximum topics amount per page.
+     *
+     * @var int
+     */
+    public int $rssAmount = 10;
+
+    /**
+     * Current index of a rss topic.
+     *
+     * @var mixed|int
+     */
+    public mixed $rssIndex = 0;
+
+    /**
+     * Instructions for the OpenAI requests.
+     *
+     * @var array|string[]
+     */
     private array $instructions = [
-        'title' => 'Rewrite the news title, but keep its meaning.',
+        'title' => 'Rewrite the news title, but keep its meaning. The title is: ',
         'description' => 'Rewrite the news description, but keep its meaning.',
     ];
 
+    /**
+     * Selected type, associated with the rss-types array.
+     *
+     * @var string
+     */
     public string $selectedType = '';
+
+    /**
+     * Selected category, associated with the rss-types array.
+     *
+     * @var string
+     */
     public string $selectedCategory = '';
 
-    public array $rssTypes = []; // mounted value
-    public array $rssResponse = [];
-    public int $rssAmount = 10;
-
-    public array $texts = [];
-//        = [
-//        'title' => [
-//            'initial' => 'Inside One of the World’s Biggest Green Hydrogen Projects',
-//            'updated' => 'World’s Biggest Green Hydrogen Project - One of the Biggest One',
-//        ],
-//        'description' => [
-//            'initial' => 'Hundreds of billions of dollars are being invested in a high-tech gamble to make hydrogen clean, cheap and widely available. In Australia’s Outback, that starts with 10 million new solar panels.',
-//            'updated' => 'The renewable energy developer Neoen said in March that it would build this, billed as the world’s largest solar-powered battery, using Tesla Powerpack batteries.',
-//        ]
-//    ];
+    /**
+     * Input/output texts.
+     *
+     * Structure:
+     *      'title'=> [
+     *          'initial' => <string>, 'updated' => <string>],
+     *      'description' = > [
+     *          'initial' => <string>, 'updated' => <string>]
+     * @var array
+     */
+    public array $inOutTexts = [];
 
 
-    public function mount(): void {
-        $this->rssTypes = require base_path() . $this->rssTypesPath;
-    }
-
-    public function resetAll(): void {
-        $this->reset(['selectedType', 'selectedCategory', 'rssResponse']);
-    }
-
+    /**
+     * Action of RSS button. Gets an rss response.
+     *
+     */
     public function convert(): void {
+
+        $this->validateOnly('selectedType');
+        $this->validateOnly('selectedCategory');
 
         if(!empty($this->rssResponse)) {
             $this->rssResponse = [];
@@ -59,16 +118,26 @@ class NewsController extends Component
         $this->rssResponse = $this->rssClient($rssUri);
     }
 
-    public function toggleMessage(int $index, bool $isRewrite): void
+    /**
+     * Action of Update button. Executes the responses to the OpenAI and show/hide initials and results.
+     *
+     * @param mixed $index
+     * @param bool $isRewrite
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function toggleMessage(mixed $index, bool $isRewrite): void
     {
+        $this->rssIndex = $index;
+        $this->validateOnly('rssIndex');
+
         if($isRewrite) {
-            $this->texts = $this->rewriteAll($index);
+            $this->inOutTexts = $this->rewriteAll($this->rssIndex);
         } else {
-            $this->texts = [];
+            $this->inOutTexts = [];
         }
 
         foreach ($this->rssResponse as $key => $block) {
-            if ($key == $index) {
+            if ($key == $this->rssIndex) {
                 $this->rssResponse[$key]['show_message'] = !$this->rssResponse[$key]['show_message'];
             } else {
                 $this->rssResponse[$key]['show_message'] = false;
@@ -76,27 +145,35 @@ class NewsController extends Component
         }
     }
 
-
+    /**
+     * Gets an RSS data.
+     *
+     * @param string $uri
+     * @return array
+     */
     private function rssClient(string $uri): array {
         $rssArray = [];
         try {
             $rssArray = RSSToArrayConverter::fromUri($uri)->convert();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             dd('Error: ' . $e->getMessage());
         }
         return $rssArray;
     }
 
-    private function rewriteOne(string $input, string $instruction): string {
-        // using Edits API config settings
-        $client = new OpenAIClient(
-            config('services.openai.token'),
-            config('services.openai_edits'));
+    /**
+     * Runs a request to the OpenAI and gets the response.
+     *
+     * @param array $input
+     * @return string
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    private function rewriteOne(array $input): string {
+        $client = new OpenAIClient(config('services.openai.token'));
         try {
-            $responseJson = $client->requestEdits($input, $instruction);
-        } catch (\Exception $e) {
-            return "Error: " . $e->getMessage() .
-            " \n The input was: ". $input;
+            $responseJson = $client->requestEdits($input);
+        } catch (Exception $e) {
+            return "Error: " . $e->getMessage();
         }
         $responseArray = json_decode($responseJson, true);
         // Output string
@@ -108,32 +185,86 @@ class NewsController extends Component
             return 'Error: Type - ' . $responseArray['error']['type'] .
                 ' Message - ' . $responseArray['error']['message'];
         }
-        return '';
+        return 'Something went wrong...';
     }
 
+    /**
+     * Generates an input/output texts.
+     *
+     * @param int $i
+     * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     private function rewriteAll(int $i): array {
         $texts = [];
         foreach ($this->instructions as $type => $instruction) {
-            $input = $this->rssResponse[$i][$type];
-            $output = $this->rewriteOne($input, $instruction);
-            $texts[$type]['initial'] = $input;
+//            $content = $instruction . $this->rssResponse[$i][$type];
+            $output = $this->rewriteOne([
+//                'model' => 'gpt-3.5-turbo',
+//                'messages' => [
+//                    [
+//                        'role' => 'user',
+//                        'content' => $content
+//                    ],
+//                ],
+                'model' => 'text-davinci-edit-001',
+                'input' => $this->rssResponse[$i][$type],
+                'instruction' => $instruction,
+            ]);
+            $texts[$type]['initial'] = $this->rssResponse[$i][$type];
             $texts[$type]['updated'] = $output;
         }
         return $texts;
     }
 
-//    public function next(): void
-//    {
-//        // Go to the next step
-//        $this->emit('goToStep', [
-//            'step' => 2,
-//            'selectedType' => $this->selectedType,
-//            'selectedCategory' => $this->selectedCategory,
-//        ]);
-//    }
-
+    // Livewire component automatically executed methods.
     public function render(): object
     {
         return view('livewire.news-controller');
+    }
+
+    /**
+     * Set settings at the component initiation.
+     */
+    public function mount(): void {
+        $this->rssTypes = require base_path() . $this->rssTypesPath;
+    }
+
+    /**
+     * Reset all button action.
+     */
+    public function resetAll(): void {
+        $this->reset(['selectedType', 'selectedCategory', 'rssResponse', 'rssIndex']);
+        $this->resetErrorBag();
+    }
+
+    /**
+     * Input data validation rules.
+     *
+     * @return array[]
+     */
+    protected function rules(): array
+    {
+        return [
+            'selectedType' => ['required', Rule::prohibitedIf(
+                !isset($this->rssTypes[$this->selectedType])
+            )],
+            'selectedCategory'  => ['required', Rule::prohibitedIf(
+                !isset($this->rssTypes[$this->selectedType][$this->selectedCategory])
+            )],
+            'rssIndex' => ['required', 'int', Rule::prohibitedIf(
+                !isset($this->rssResponse[$this->rssIndex])
+            )]
+        ];
+    }
+
+    /**
+     * Validates only updated property.
+     *
+     * @param $propertyName
+     */
+    public function updated($propertyName)
+    {
+        $this->validateOnly($propertyName);
     }
 }
