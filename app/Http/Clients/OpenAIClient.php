@@ -12,7 +12,8 @@ class OpenAIClient
     private static string $token;
     private static array $headers;
 
-    public function __construct($token) {
+    public function __construct($token)
+    {
         self::$token = $token;
         self::$settings = config('openai');
         self::$headers = [
@@ -25,7 +26,8 @@ class OpenAIClient
      * @throws Exception
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function requestEdits(array $input): string {
+    public function requestEdits(array $input): string
+    {
         return $this->request(self::$settings['edits']['uri'], $input);
     }
 
@@ -33,7 +35,8 @@ class OpenAIClient
      * @throws Exception
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function requestChat(array $input): string {
+    public function requestChat(array $input): string
+    {
         return $this->request(self::$settings['chat']['uri'], $input);
     }
 

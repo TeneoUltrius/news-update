@@ -23,7 +23,8 @@
                         <x-svg-arrow-down/>
                     </div>
                 </div>
-                @if(empty($selectedType)) <x-loader-line/> @endif
+                @if(empty($selectedType))
+                    <x-loader-line/> @endif
             </div>
         </div>
         {{--        News category select--}}
@@ -31,7 +32,8 @@
             <div class="md:flex">
                 <div class="w-full px-4 pb-4">
                     <div class="relative">
-                        @error('selectedCategory') <span class="text-red-500 font-semibold">{{ $message }}</span> @enderror
+                        @error('selectedCategory') <span
+                            class="text-red-500 font-semibold">{{ $message }}</span> @enderror
                         <label for="name" class="sr-only">{{ __('Select category') }}</label>
                         <select
                             {{ !empty($rssResponse) ? 'disabled' : '' }}
@@ -64,7 +66,6 @@
             <div class="md:flex">
                 <div class="w-full px-4">
                     @if(empty($rssResponse))
-                        {{--                        <div class="relative pb-4 flex justify-between">--}}
                         <x-button
                             x-on:click=" $wire.convert()"
                             class="hover:bg-cyan-800"
@@ -83,7 +84,6 @@
                             {{ __('Reset all') }}
                         </x-button>
                     @endif
-                    {{--                        </div>--}}
                 </div>
                 @endif
             </div>
@@ -123,23 +123,16 @@
                                     class="hover:bg-cyan-800"
                                 >
                                         <span x-show="!showSpinner">
-                                            {{ __('Update content') }}
+                                            {{ __('Refresh Content') }}
                                         </span>
                                     <div x-show="showSpinner" class="inline-flex items-center m-auto">
                                         <x-loader-spinner/>
                                     </div>
                                 </x-button>
-                                @error('rssIndex') <span class="text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                @error('rssIndex') <span
+                                    class="text-red-500 font-semibold">{{ $message }}</span> @enderror
                             </div>
 
-                            {{--                                <button class="mt-2 py-2 px-4 bg-cyan-700 text-white rounded hover:bg-cyan-800 transition duration-200"--}}
-                            {{--                                    wire:click="toggleMessage({{ $i }}, true)"--}}
-                            {{--                                    wire:loading.attr="disabled"--}}
-                            {{--                                    wire:loading.class="opacity-50"--}}
-                            {{--                                >--}}
-                            {{--                                    Update content--}}
-                            {{--                                </button>--}}
-                            {{--                            Pop-up window--}}
                             @if($rssResponse[$i]['show_message'] AND !empty($inOutTexts))
                                 <div
                                     class="fixed inset-0 bg-gray-700 bg-opacity-50 flex justify-center items-center">
@@ -152,7 +145,8 @@
                                         </button>
 
                                         <div class="text-base pt-3 pb-5">
-                                            <label class="font-bold text-lg text-gray-800">{{ __('Initial text') }}</label>
+                                            <label
+                                                class="font-bold text-lg text-gray-800">{{ __('Initial text') }}</label>
                                             <div class="mt-2 text-gray-700 leading-relaxed">
                                                 <div class="bg-emerald-50">
                                                     <b class="text-gray-600">{{ __('Title:') }} </b> {{ $inOutTexts['title']['initial'] }}
@@ -164,7 +158,8 @@
                                         </div>
 
                                         <div class="text-base pt-3 pb-5">
-                                            <label class="font-bold text-lg text-gray-800">{{ __('AI Updated text') }}</label>
+                                            <label
+                                                class="font-bold text-lg text-gray-800">{{ __('AI Updated text') }}</label>
                                             <div class="mt-2 text-gray-700 leading-relaxed">
                                                 <div class="bg-emerald-50">
                                                     <b class="text-gray-600">{{ __('Title:') }}</b> {{ $inOutTexts['title']['updated'] }}
