@@ -169,16 +169,17 @@ class NewsController extends Component
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     private function rewriteOne(array $input): string {
+
         $client = new OpenAIClient(config('services.openai.token'));
         try {
-            $responseJson = $client->requestEdits($input);
+            $responseJson = $client->requestChat($input);
         } catch (Exception $e) {
             return "Error: " . $e->getMessage();
         }
         $responseArray = json_decode($responseJson, true);
         // Output string
-        if($responseArray['choices'][0]['text'] ?? false) {
-            return $responseArray['choices'][0]['text'];
+        if($responseArray['choices'][0]['message']['content'] ?? false) {
+            return $responseArray['choices'][0]['message']['content'];
         }
         // OpenAI error
         if ($responseArray['error'] ?? false) {
@@ -198,18 +199,18 @@ class NewsController extends Component
     private function rewriteAll(int $i): array {
         $texts = [];
         foreach ($this->instructions as $type => $instruction) {
-//            $content = $instruction . $this->rssResponse[$i][$type];
+            $content = $instruction . $this->rssResponse[$i][$type];
             $output = $this->rewriteOne([
-//                'model' => 'gpt-3.5-turbo',
-//                'messages' => [
-//                    [
-//                        'role' => 'user',
-//                        'content' => $content
-//                    ],
-//                ],
-                'model' => 'text-davinci-edit-001',
-                'input' => $this->rssResponse[$i][$type],
-                'instruction' => $instruction,
+                'model' => 'gpt-3.5-turbo',
+                'messages' => [
+                    [
+                        'role' => 'user',
+                        'content' => $content
+                    ],
+                ],
+//                'model' => 'text-davinci-edit-001',
+//                'input' => $this->rssResponse[$i][$type],
+//                'instruction' => $instruction,
             ]);
             $texts[$type]['initial'] = $this->rssResponse[$i][$type];
             $texts[$type]['updated'] = $output;

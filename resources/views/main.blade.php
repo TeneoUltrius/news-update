@@ -9,6 +9,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('img/favicon.svg') }} ">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -18,7 +19,7 @@
 <body class="bg-white">
 <header class="bg-gray-100 text-white py-6">
     <div class="container mx-auto">
-        <img src="/img/logo.svg" class="w-96 mx-auto" alt="Logo">
+        <img src= "{{ asset('img/logo.svg') }}" class="w-96 mx-auto" alt="Logo">
     </div>
 </header>
 
@@ -28,6 +29,5 @@
 
 </main>
 @livewireScripts
-
 </body>
 </html>

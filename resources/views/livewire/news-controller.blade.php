@@ -67,7 +67,7 @@
                 <div class="w-full px-4">
                     @if(empty($rssResponse))
                         <x-button
-                            x-on:click=" $wire.convert()"
+                            x-on:click="$wire.convert()"
                             class="hover:bg-cyan-800"
                             wire:loading.attr="disabled"
                             wire:loading.class="opacity-50"
@@ -120,7 +120,7 @@
                                                     $wire.toggleMessage({{ $i }}, true);
                                                     }
                                                 document.body.style.overflow = 'hidden';"
-                                    class="hover:bg-cyan-800"
+                                    class="hover:bg-cyan-800 refresh-button"
                                 >
                                         <span x-show="!showSpinner">
                                             {{ __('Refresh Content') }}
@@ -134,14 +134,14 @@
                             </div>
 
                             @if($rssResponse[$i]['show_message'] AND !empty($inOutTexts))
-                                <div
-                                    class="fixed inset-0 bg-gray-700 bg-opacity-50 flex justify-center items-center">
+                                <div wire:loading.remove
+                                                                         class="fixed inset-0 bg-gray-700 bg-opacity-50 flex justify-center items-center popupwindow">
                                     <div class="max-w-3xl bg-white px-8 py-5 rounded-lg shadow-md relative">
                                         <button class="absolute top-2 right-2 text-gray-400 hover:text-gray-500"
-                                                wire:click="toggleMessage({{ $i }}, false)"
                                                 x-on:click="$dispatch('popup');
+                                                $wire.toggleMessage({{ $i }}, false);
                                                 document.body.style.overflow = 'auto';">
-                                            <x-svg-cross/>
+                                        <x-svg-cross/>
                                         </button>
 
                                         <div class="text-base pt-3 pb-5">
@@ -173,9 +173,10 @@
                                         <div class="flex justify-center">
                                             <x-button autofocus
                                                       class="hover:bg-cyan-800"
-                                                      wire:click="toggleMessage({{ $i }}, false)"
                                                       x-on:click="$dispatch('popup');
-                                                        document.body.style.overflow = 'auto';">
+                                                      $wire.toggleMessage({{ $i }}, false);
+                                                      document.body.style.overflow = 'auto';"
+                                            >
                                                 {{ __('Close') }}
                                             </x-button>
                                         </div>
@@ -189,3 +190,5 @@
         </div>
     @endif
 </div>
+
+
